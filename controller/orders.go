@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -40,24 +41,38 @@ func (ctrl *Controller) CreateOrder(c *gin.Context) {
 	order.Total = float64(order.Quantity) * product.Price
 
 	// Insert into the database
-	result, err := ctrl.DB.Exec("INSERT INTO order (product_id, customer_id, quantity, total, created_at) VALUES (?, ?, ?, ?, ?)",
-		order.ProductID, order.CustomerID, order.Quantity, order.Total, time.Now())
+	result, err := ctrl.DB.Exec("INSERT INTO orders (id, product_id, customer_id, quantity, total, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		order.ID, order.ProductID, order.CustomerID, order.Quantity, order.Total, time.Now())
 	if err != nil {
+		log.Println("Error creating product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
 		return
 	}
 
-	// Get the ID of the newly created order
-	orderID, err := result.LastInsertId()
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve order ID"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve rows affected"})
 		return
 	}
 
-	// Set the ID in the order struct
-	order.ID = int(orderID)
+	// Check if any rows were affected, if none, return an error
+	if rowsAffected == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No rows were affected"})
+		return
+	}
 
-	c.JSON(http.StatusCreated, order)
+	// // Get the ID of the newly created order
+	// orderID, err := result.LastInsertId()
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve order ID"})
+	// 	return
+	// }
+
+	// // Set the ID in the order struct
+	// order.ID = int(orderID)
+
+	c.JSON(http.StatusCreated, map[string]interface{}{"message": "Creat Orders successfully", "data": order})
 }
 
 // GetOrder handles the retrieval of a single order by ID
@@ -76,5 +91,5 @@ func (ctrl *Controller) GetOrder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, order)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Get Order successfully", "data": order})
 }

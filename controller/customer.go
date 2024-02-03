@@ -18,25 +18,28 @@ func (ctrl *Controller) CreateCustomer(c *gin.Context) {
 		return
 	}
 
-	// Insert into the database
-	result, err := ctrl.DB.Exec("INSERT INTO customer (name, email, created_at, updated_at) VALUES (?, ?, ?, ?)",
-		customer.Name, customer.Email, time.Now(), time.Now())
+	// Insert into the database with the specified id
+	result, err := ctrl.DB.Exec("INSERT INTO customer (id, name, email, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+		customer.ID, customer.Name, customer.Email, time.Now(), time.Now())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create customer"})
 		return
 	}
 
-	// Get the ID of the newly created customer
-	customerID, err := result.LastInsertId()
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve customer ID"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve rows affected"})
 		return
 	}
 
-	// Set the ID in the customer struct
-	customer.ID = int(customerID)
+	// Check if any rows were affected, if none, return an error
+	if rowsAffected == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No rows were affected"})
+		return
+	}
 
-	c.JSON(http.StatusCreated, customer)
+	c.JSON(http.StatusCreated, map[string]interface{}{"message": "Customer created successfully", "data": customer})
 }
 
 // GetCustomers handles the retrieval of all customers
@@ -59,7 +62,7 @@ func (ctrl *Controller) GetCustomers(c *gin.Context) {
 		customers = append(customers, customer)
 	}
 
-	c.JSON(http.StatusOK, customers)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Get Customers successfully", "data": customers})
 }
 
 // GetCustomer handles the retrieval of a single customer by ID
@@ -78,7 +81,7 @@ func (ctrl *Controller) GetCustomer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, customer)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Get Customers by ID successfully", "data": customer})
 }
 
 // UpdateCustomer handles the update of a customer by ID
@@ -105,7 +108,7 @@ func (ctrl *Controller) UpdateCustomer(c *gin.Context) {
 
 	// Return the updated customer
 	updatedCustomer.ID = id
-	c.JSON(http.StatusOK, updatedCustomer)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Update Customers successfully", "data": updatedCustomer})
 }
 
 // DeleteCustomer handles the deletion of a customer by ID

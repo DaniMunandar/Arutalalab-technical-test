@@ -29,24 +29,27 @@ func (ctrl *Controller) CreateProduct(c *gin.Context) {
 	}
 
 	// Insert into the database
-	result, err := ctrl.DB.Exec("INSERT INTO product (name, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-		product.Name, product.Price, product.Stock, time.Now(), time.Now())
+	result, err := ctrl.DB.Exec("INSERT INTO product (id, name, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+		product.ID, product.Name, product.Price, product.Stock, time.Now(), time.Now())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})
 		return
 	}
 
-	// Get the ID of the newly created product
-	productID, err := result.LastInsertId()
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve product ID"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve rows affected"})
 		return
 	}
 
-	// Set the ID in the product struct
-	product.ID = int(productID)
+	// Check if any rows were affected, if none, return an error
+	if rowsAffected == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No rows were affected"})
+		return
+	}
 
-	c.JSON(http.StatusCreated, product)
+	c.JSON(http.StatusCreated, map[string]interface{}{"message": "Product created successfully", "data": product})
 }
 
 // GetProducts handles the retrieval of all products
@@ -69,7 +72,7 @@ func (ctrl *Controller) GetProducts(c *gin.Context) {
 		products = append(products, product)
 	}
 
-	c.JSON(http.StatusOK, products)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Get Product successfully", "data": products})
 }
 
 // GetProduct handles the retrieval of a single product by ID
@@ -88,7 +91,7 @@ func (ctrl *Controller) GetProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, product)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Get Product by ID successfully", "data": product})
 }
 
 // UpdateProduct handles the update of a product by ID
@@ -115,7 +118,7 @@ func (ctrl *Controller) UpdateProduct(c *gin.Context) {
 
 	// Return the updated product
 	updatedProduct.ID = id
-	c.JSON(http.StatusOK, updatedProduct)
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Update Product successfully", "data": updatedProduct})
 }
 
 // DeleteProduct handles the deletion of a product by ID
