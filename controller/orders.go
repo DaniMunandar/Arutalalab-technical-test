@@ -62,16 +62,6 @@ func (ctrl *Controller) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	// // Get the ID of the newly created order
-	// orderID, err := result.LastInsertId()
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve order ID"})
-	// 	return
-	// }
-
-	// // Set the ID in the order struct
-	// order.ID = int(orderID)
-
 	c.JSON(http.StatusCreated, map[string]interface{}{"message": "Creat Orders successfully", "data": order})
 }
 
