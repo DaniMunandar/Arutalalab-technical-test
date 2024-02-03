@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -44,7 +43,6 @@ func (ctrl *Controller) CreateOrder(c *gin.Context) {
 	result, err := ctrl.DB.Exec("INSERT INTO orders (id, product_id, customer_id, quantity, total, created_at) VALUES (?, ?, ?, ?, ?, ?)",
 		order.ID, order.ProductID, order.CustomerID, order.Quantity, order.Total, time.Now())
 	if err != nil {
-		log.Println("Error creating product:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
 		return
 	}
